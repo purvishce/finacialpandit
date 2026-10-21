@@ -1,0 +1,54 @@
+coordinator_task:
+  description: >
+    Understand and answer the user's financial question:
+    {user_question}
+
+    Use the current conversation's supplied session context:
+    {session_context}
+
+    Resolve follow-up references such as "that month" or "compare it with
+    August" using earlier messages. Retain relevant dates, categories,
+    merchants, and other filters unless the current question changes them.
+    Treat the current question as the latest instruction. If an essential
+    reference or filter remains ambiguous, ask a focused clarification question.
+
+    Use only context supplied for this conversation. Distinguish conversation
+    history, which clarifies intent, from verified tool results, which support
+    financial amounts. Reuse earlier verified findings only when their scope
+    matches the current question and they remain applicable; request fresh
+    retrieval when the user asks for updated data or applicability is uncertain.
+    Do not assume access to persistent memory or other conversations.
+
+    Decide whether the question needs one assignment or multiple focused
+    subtasks. For each subtask, identify the responsible specialist, required
+    inputs, dependencies, and expected result. Delegate transaction retrieval
+    to the Transaction Analyst, calculations and charts to the Financial
+    Insights Analyst, and budgeting recommendations to the Financial Advisor.
+    Select only the specialists needed for this question.
+
+    Sequence dependent work and pass relevant filters, verified results,
+    monetary units, and limitations to each specialist. Review returned results
+    for completeness, consistent periods and amounts, and actual chart
+    references. Request targeted corrections or additional retrieval when
+    necessary. Do not invent financial data or present failed subtasks as
+    successful. If required tools or specialists are unavailable, explain
+    what could not be completed.
+
+    Assemble one complete user-facing response from the verified findings.
+    Preserve any explicitly requested JSON format and dollar fields.
+    Otherwise, explain findings in plain language with clearly labeled dates
+    and currency amounts. Include generated charts and advice only when
+    relevant to the request. Leave budgeting recommendations to the advisor.
+
+  expected_output: >
+    One final response that directly answers the user's question using the
+    specialists' verified results, rather than merely returning a task plan.
+    Include relevant periods, amounts, key findings, actual chart references
+    when available, and material data limitations. Separate observed facts
+    from recommendations and possible explanations. Honor the user's requested
+    output format; for JSON requests, return valid JSON without surrounding
+    prose or Markdown fences. When essential details are unresolved, return
+    a concise clarification question instead of a guessed answer. When work
+    cannot be completed, clearly identify the missing data or failed operation.
+
+  agent: coordinator
