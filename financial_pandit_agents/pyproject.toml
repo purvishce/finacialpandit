@@ -5,9 +5,11 @@ description = "financial_pandit_agents using crewAI"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10,<3.14"
 dependencies = [
-    "crewai[tools]==1.14.4",
+    "crewai[tools]==1.15.28",
+    "fastapi[standard]>=0.162.0",
     "matplotlib>=3.9,<4",
-    "python-dotenv>=1,<2"
+    "python-dotenv>=1,<2",
+    "psycopg[binary]>=3.2,<4",
 ]
 
 [project.scripts]

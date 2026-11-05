@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import sys
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -9,7 +10,6 @@ from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_STATEMENTS_PATH = PROJECT_ROOT / "Statements"
-DEFAULT_DB_PATH = PROJECT_ROOT / "financial_pandit.db"
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -110,7 +110,7 @@ def ingest_csv(connection, csv_path: Path) -> int:
 
             cursor = connection.execute(
                 """
-                INSERT OR IGNORE INTO transactions (
+                INSERT INTO transactions (
                     external_transaction_id,
                     transaction_date,
                     posted_date,
@@ -122,7 +122,8 @@ def ingest_csv(connection, csv_path: Path) -> int:
                     confidence,
                     needs_review
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1);
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
+                ON CONFLICT DO NOTHING;
                 """,
                 (
                     reference_number,
@@ -147,7 +148,7 @@ def transaction_exists(connection, reference_number: str) -> bool:
             """
             SELECT 1
             FROM transactions
-            WHERE external_transaction_id = ?
+            WHERE external_transaction_id = %s
             LIMIT 1;
             """,
             (reference_number,),
@@ -156,9 +157,8 @@ def transaction_exists(connection, reference_number: str) -> bool:
     )
 
 
-def ingest(path: Path, db_path: Path) -> int:
-    db_path = resolve_project_path(db_path)
-    database = FinancialPanditDB(db_path)
+def ingest(path: Path, database_url: str | None = None) -> int:
+    database = FinancialPanditDB(database_url)
     database.initialize()
 
     csv_paths = iter_csv_paths(path)
@@ -187,15 +187,14 @@ def parse_args() -> argparse.Namespace:
         help="CSV file or directory of CSV files. Defaults to the project Statements folder.",
     )
     parser.add_argument(
-        "--db",
-        default=DEFAULT_DB_PATH,
-        type=Path,
-        help="SQLite database path. Defaults to the project financial_pandit.db.",
+        "--database-url",
+        default=os.environ.get("DATABASE_URL"),
+        help="PostgreSQL connection URL. Defaults to DATABASE_URL.",
     )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    total = ingest(args.path, args.db)
+    total = ingest(args.path, args.database_url)
     print(f"Inserted {total} transaction(s)")

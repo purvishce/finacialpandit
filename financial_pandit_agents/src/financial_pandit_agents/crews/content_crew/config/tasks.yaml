@@ -34,20 +34,38 @@ coordinator_task:
     successful. If required tools or specialists are unavailable, explain
     what could not be completed.
 
+    For cost-cutting or "where should I cut" questions, first identify the
+    latest period with actual transaction data. If the current calendar month
+    is empty or incomplete, use the latest available complete month or clearly
+    state that the data is not current; do not treat an empty current-month
+    query as evidence that spending is absent across categories. Analyze
+    EXPENSE transactions only and exclude INCOME and TRANSFER rows. Rank the
+    largest recurring or discretionary expense categories, distinguish fixed
+    costs from flexible costs when the data supports it, and give no more than
+    three to five actionable reduction opportunities. Use a compact Markdown
+    table only when it makes category comparisons clearer; otherwise use
+    concise prose or bullets. Never produce a large diagnostic JSON payload for
+    a normal user-facing answer.
+
     Assemble one complete user-facing response from the verified findings.
-    Preserve any explicitly requested JSON format and dollar fields.
-    Otherwise, explain findings in plain language with clearly labeled dates
-    and currency amounts. Include generated charts and advice only when
-    relevant to the request. Leave budgeting recommendations to the advisor.
+    Specialist JSON is internal evidence and must not be copied verbatim into
+    the user response unless the user explicitly requested JSON. For lists of
+    transactions, categories, months, or comparisons, render the relevant
+    fields as readable Markdown tables with clear column names and dollar
+    amounts when a table improves comparison. Use plain-language summaries or
+    bullets for simple answers, and include
+    generated charts and advice only when relevant to the request. Leave
+    budgeting recommendations to the advisor.
 
   expected_output: >
     One final response that directly answers the user's question using the
     specialists' verified results, rather than merely returning a task plan.
     Include relevant periods, amounts, key findings, actual chart references
     when available, and material data limitations. Separate observed facts
-    from recommendations and possible explanations. Honor the user's requested
-    output format; for JSON requests, return valid JSON without surrounding
-    prose or Markdown fences. When essential details are unresolved, return
+    from recommendations and possible explanations. Default to concise
+    Markdown prose, using tables only when they improve comparison. Honor the user's requested output format; only for explicit
+    JSON requests, return valid JSON without surrounding prose or Markdown
+    fences. When essential details are unresolved, return
     a concise clarification question instead of a guessed answer. When work
     cannot be completed, clearly identify the missing data or failed operation.
 

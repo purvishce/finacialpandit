@@ -1,0 +1,30 @@
+services:
+  financial-pandit-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ../.env
+    environment:
+      # Containers must use host.docker.internal, not the host-side localhost URL.
+      DATABASE_URL: ${DATABASE_URL_DOCKER:?Set DATABASE_URL_DOCKER to the PostgreSQL URL using host.docker.internal}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - financial-pandit-output:/app/financial_pandit_agents/output
+    networks:
+      default:
+      librechat:
+        aliases:
+          - financial-pandit-api
+    restart: unless-stopped
+
+volumes:
+  financial-pandit-output:
+
+networks:
+  librechat:
+    external: true
+    name: financial-pandit-network

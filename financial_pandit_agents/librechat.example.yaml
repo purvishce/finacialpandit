@@ -1,0 +1,15 @@
+# Merge this endpoints block into your existing librechat.yaml.
+# Docker Desktop on Windows: start the API with --host 0.0.0.0.
+# Native LibreChat: replace host.docker.internal with 127.0.0.1.
+# Windows browser checks: use http://localhost:8001/health or /docs.
+endpoints:
+  custom:
+    - name: "Financial Pandit"
+      apiKey: "local-unused"
+      baseURL: "http://host.docker.internal:8001/v1"
+      models:
+        default: ["financial-pandit"]
+        fetch: true
+      titleConvo: false
+      summarize: false
+      modelDisplayLabel: "Financial Pandit"

@@ -8,11 +8,34 @@ from unittest.mock import patch
 
 from matplotlib.axes import Axes
 from PIL import Image
+from crewai import LLM
+from crewai.utilities.agent_utils import convert_tools_to_openai_schema
 
 from financial_pandit_agents.tools.spending_chart_tool import SpendingChartTool
 
 
 class SpendingChartToolTests(unittest.TestCase):
+    def test_openai_schema_preserves_chart_title_and_required_fields(self):
+        # Exercise the provider conversion that previously removed the actual
+        # title argument as though it were JSON Schema metadata (HTTP 400).
+        tools, _, _ = convert_tools_to_openai_schema([SpendingChartTool()])
+        llm = LLM(model="openai/gpt-4o", api_key="offline-schema-test")
+        parameters = llm._convert_tools_for_interference(tools)[0]["function"]["parameters"]
+
+        def check_objects(schema):
+            if isinstance(schema, dict):
+                if schema.get("type") == "object":
+                    self.assertEqual(set(schema["required"]), set(schema["properties"]))
+                    self.assertIs(schema["additionalProperties"], False)
+                for value in schema.values():
+                    check_objects(value)
+            elif isinstance(schema, list):
+                for value in schema:
+                    check_objects(value)
+
+        self.assertIn("title", parameters["properties"])
+        check_objects(parameters)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
