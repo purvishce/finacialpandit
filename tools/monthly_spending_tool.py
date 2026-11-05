@@ -2,22 +2,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
-import sqlite3
 from decimal import Decimal
-from pathlib import Path
 from typing import TypedDict
 
+from database import FinancialPanditDB
 
-DEFAULT_DB_PATH = Path(__file__).resolve().parents[1] / "financial_pandit.db"
 
 MONTHLY_SPENDING_SQL = """
-    SELECT strftime('%Y-%m', transaction_date) AS transaction_month,
-           COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') AS spending_category,
+    SELECT to_char(transaction_date, 'YYYY-MM') AS transaction_month,
+           COALESCE(NULLIF(BTRIM(category), ''), 'Uncategorized') AS spending_category,
            ROUND(SUM(amount), 2) AS spending_dollars
     FROM transactions
-    WHERE "type" = 'EXPENSE'
-      AND (? IS NULL OR strftime('%Y-%m', transaction_date) = ?)
+    WHERE type = 'EXPENSE'
+      AND (%s::text IS NULL OR to_char(transaction_date, 'YYYY-MM') = %s)
     GROUP BY transaction_month, spending_category
     ORDER BY transaction_month, spending_dollars DESC, spending_category
 """
@@ -35,19 +34,17 @@ class MonthlySpending(TypedDict):
 
 
 def parse_month(value: str) -> str:
-    """Validate a calendar month in YYYY-MM format."""
     if not re.fullmatch(r"[0-9]{4}-(0[1-9]|1[0-2])", value) or value[:4] == "0000":
         raise argparse.ArgumentTypeError("Month must use YYYY-MM, for example 2026-09.")
     return value
 
 
-def get_monthly_spending(
-    connection: sqlite3.Connection, month: str | None = None
-) -> MonthlySpending | list[MonthlySpending]:
-    """Return one month's report, or a list of reports when month is omitted."""
+def get_monthly_spending(connection, month: str | None = None) -> MonthlySpending | list[MonthlySpending]:
     if month is not None:
         parse_month(month)
-    rows = connection.execute(MONTHLY_SPENDING_SQL, (month, month))
+    with connection.cursor() as cursor:
+        cursor.execute(MONTHLY_SPENDING_SQL, (month, month))
+        rows = cursor.fetchall()
     reports: dict[str, MonthlySpending] = {}
     totals: dict[str, Decimal] = {}
     if month is not None:
@@ -55,41 +52,26 @@ def get_monthly_spending(
     for transaction_month, category, spending_dollars in rows:
         if transaction_month is None:
             raise ValueError("An expense has an invalid transaction date.")
-        if transaction_month not in reports:
-            reports[transaction_month] = {
-                "month": transaction_month,
-                "total_spending_dollars": 0.0,
-                "categories": [],
-            }
-        report = reports[transaction_month]
-        report["categories"].append({
-            "category": category,
-            "spending_dollars": spending_dollars,
+        reports.setdefault(transaction_month, {
+            "month": transaction_month, "total_spending_dollars": 0.0, "categories": [],
         })
-        totals[transaction_month] = (
-            totals.get(transaction_month, Decimal("0")) + Decimal(str(spending_dollars))
-        )
-        report["total_spending_dollars"] = float(
-            totals[transaction_month].quantize(Decimal("0.01"))
-        )
+        reports[transaction_month]["categories"].append({
+            "category": category, "spending_dollars": float(spending_dollars),
+        })
+        totals[transaction_month] = totals.get(transaction_month, Decimal("0")) + Decimal(str(spending_dollars))
+        reports[transaction_month]["total_spending_dollars"] = float(totals[transaction_month].quantize(Decimal("0.01")))
     return reports[month] if month is not None else list(reports.values())
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Show monthly spending by category as JSON with amounts in dollars."
-    )
-    parser.add_argument("--db", type=Path, default=DEFAULT_DB_PATH)
+    parser = argparse.ArgumentParser(description="Show monthly spending by category as JSON with amounts in dollars.")
     parser.add_argument("--month", type=parse_month, help="Filter to YYYY-MM.")
     args = parser.parse_args()
-
     try:
-        # Read-only mode avoids accidentally creating or modifying a database.
-        with sqlite3.connect(args.db.resolve().as_uri() + "?mode=ro", uri=True) as connection:
+        with FinancialPanditDB(os.environ.get("DATABASE_URL")).connect() as connection:
             spending = get_monthly_spending(connection, args.month)
-    except (sqlite3.Error, ValueError) as error:
+    except Exception as error:
         parser.exit(1, f"Unable to read spending: {error}\n")
-
     print(json.dumps(spending, indent=2))
 
 
