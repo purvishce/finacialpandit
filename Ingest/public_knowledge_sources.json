@@ -1,0 +1,37 @@
+[
+  {
+    "url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-ira-contribution-limits",
+    "category": "ira",
+    "account_types": ["ira"],
+    "source_name": "IRS",
+    "tax_year": 2026
+  },
+  {
+    "url": "https://www.irs.gov/retirement-plans/retirement-plans-faqs-on-designated-roth-accounts",
+    "category": "401k",
+    "account_types": ["401k", "403b"],
+    "source_name": "IRS",
+    "tax_year": 2026
+  },
+  {
+    "url": "https://www.irs.gov/retirement-plans/plan-participant-employee/rollovers-of-retirement-plan-and-ira-distributions",
+    "category": "rollover",
+    "account_types": ["401k", "403b", "ira"],
+    "source_name": "IRS",
+    "tax_year": null
+  },
+  {
+    "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/updated",
+    "category": "investing",
+    "account_types": [],
+    "source_name": "Investor.gov",
+    "tax_year": null
+  },
+  {
+    "url": "https://www.fdic.gov/consumer-resource-center/money-smart-adults?utm_source=chatgpt.com",
+    "category": "emergency_fund",
+    "account_types": [],
+    "source_name": "CFPB",
+    "tax_year": null
+  }
+]

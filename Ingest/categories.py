@@ -45,4 +45,24 @@ DEFAULT_CATEGORIES = (
     (44, "Bonus", "INCOME"),
     (45, "Other Income", "INCOME"),
     (46, "Adjustment", "OTHER"),
+    (47, "Brokerage Contribution", "TRANSFER"),
+    (48, "Brokerage Withdrawal", "TRANSFER"),
+    (49, "Investment Purchase", "TRANSFER"),
+    (50, "Investment Sale", "TRANSFER"),
+    (51, "401(k) Employee Contribution", "TRANSFER"),
+    (52, "401(k) Employer Contribution", "OTHER"),
+    (53, "IRA Contribution", "TRANSFER"),
+    (54, "Retirement Rollover", "TRANSFER"),
+    (55, "Retirement Distribution", "TRANSFER"),
+    (56, "Investment Fees", "EXPENSE"),
+)
+
+# Vocabulary for public financial-planning knowledge documents. This is
+# intentionally separate from DEFAULT_CATEGORIES, which classifies transactions.
+PUBLIC_KNOWLEDGE_CATEGORIES = (
+    "401k",
+    "ira",
+    "rollover",
+    "investing",
+    "emergency_fund",
 )
