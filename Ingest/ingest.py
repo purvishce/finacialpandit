@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import os
 import sys
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -19,8 +18,14 @@ from Ingest.v1.decisioncall import categorize_transaction
 
 CSV_TYPE_TO_TRANSACTION_TYPE = {
     "Purchase": "EXPENSE",
+    "Withdrawal": "EXPENSE",
     "Credit": "INCOME",
+    "Deposit": "INCOME",
+    "Dividend": "INCOME",
     "Payment": "TRANSFER",
+    "Transfer": "TRANSFER",
+    "Buy": "TRANSFER",
+    "Sell": "TRANSFER",
 }
 
 REQUIRED_COLUMNS = {
@@ -66,7 +71,12 @@ def iter_csv_paths(path: Path) -> list[Path]:
     path = resolve_project_path(path)
 
     if path.is_dir():
-        return sorted(path.glob("*.csv"))
+        # Include CSV files in the selected directory and every nested folder.
+        return sorted(
+            csv_path
+            for csv_path in path.rglob("*")
+            if csv_path.is_file() and csv_path.suffix.lower() == ".csv"
+        )
 
     return [path]
 
@@ -184,12 +194,12 @@ def parse_args() -> argparse.Namespace:
         nargs="?",
         default=DEFAULT_STATEMENTS_PATH,
         type=Path,
-        help="CSV file or directory of CSV files. Defaults to the project Statements folder.",
+        help="CSV file or directory tree of CSV files. Defaults to the project Statements folder.",
     )
     parser.add_argument(
         "--database-url",
-        default=os.environ.get("DATABASE_URL"),
-        help="PostgreSQL connection URL. Defaults to DATABASE_URL.",
+        default=None,
+        help="Override the PostgreSQL connection URL; otherwise use Key Vault or DATABASE_URL.",
     )
     return parser.parse_args()
 
